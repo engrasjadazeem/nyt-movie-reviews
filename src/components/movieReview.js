@@ -1,30 +1,36 @@
 import React from 'react';
 import fetch from 'isomorphic-unfetch';
 import config from '../config/development';
+import ShortUniqueId from 'short-unique-id';
 
 class MovieReview extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       movieName: '',
-      reviews: []
+      reviews: [],
+      hasMore: false,
+      offset: 0,
     };
 
     this.handleSearch = this.handleSearch.bind(this);
     this.handleSearchBoxChange = this.handleSearchBoxChange.bind(this);
+    this.fetchMoviesData = this.fetchMoviesData.bind(this);
+    this.loadMoreReviews = this.loadMoreReviews.bind(this);
   }
 
   async handleSearch() {
     const res = await fetch(`https://api.nytimes.com/svc/movies/v2/reviews/search.json?query=${this.state.movieName}&api-key=${config.NYTAPIKey}`);
     const data = await res.json();
-    this.setState({ reviews: data.results });
+    this.setState({ reviews: data.results, hasMore: data.has_more });
   }
 
   handleSearchBoxChange(event) {
     this.setState({ movieName: event.target.value});
     // If nothing in search box revert to previous
     if (event.target.value === '') {
-      this.fetchMoviesData();
+      const result = this.fetchMoviesData();
+      this.setState({ reviews: result.results, hasMore: result.has_more });
     }
   }
 
@@ -33,9 +39,31 @@ class MovieReview extends React.Component {
   }
 
   async fetchMoviesData() {
-    const res = await fetch(`https://api.nytimes.com/svc/movies/v2/reviews/picks.json?api-key=${config.NYTAPIKey}`);
+    let apiUri = `https://api.nytimes.com/svc/movies/v2/reviews/picks.json?api-key=${config.NYTAPIKey}&order=by-date`;
+    const res = await fetch(apiUri);
     const data = await res.json();
-    this.setState({ reviews: data.results });
+    this.setState({
+      reviews: data.results, 
+      hasMore: data.has_more 
+    });
+  }
+
+  async loadMoreReviews() {
+    let apiUri = `https://api.nytimes.com/svc/movies/v2/reviews/picks.json?api-key=${config.NYTAPIKey}&order=by-date`;
+    apiUri += `&offset=${parseInt(this.state.offset+20)}`;
+    this.setState({offset: parseInt(this.state.offset+20)});
+    
+    const res = await fetch(apiUri);
+    const data = await res.json();
+    
+    const reviews = this.state.reviews.concat(data.results);
+    
+    this.setState({
+      reviews: reviews, 
+      hasMore: data.has_more 
+    });
+
+    // TODO: Load more in contrast to filter queries
   }
 
   render() {
@@ -62,8 +90,9 @@ class MovieReview extends React.Component {
       </div>
 
       <div className="row">
-        {this.state.reviews.map(review => (
-        <div className="col-lg-4 col-md-6 col-sm-12 float-left d-flex mb-3" key={review.link.url}>
+        { this.state.reviews &&
+          this.state.reviews.map(review => (
+        <div className="col-lg-4 col-md-6 col-sm-12 float-left d-flex mb-3" key={new ShortUniqueId()}>
           <div className="card">
             {(review.multimedia && review.multimedia.src) ?
             (<img className="card-img-top" src={review.multimedia.src} alt="Card cap" />) :
@@ -82,6 +111,14 @@ class MovieReview extends React.Component {
         </div>
         ))}
       </div>
+
+      { this.state.hasMore &&
+      <div className="row">
+        <div class="col text-center">
+          <button onClick={this.loadMoreReviews} variant="secondary" className="btn-lg mt-4 mb-4">Load more...</button>
+        </div>
+      </div>
+      }
     </div>
     );
   }
