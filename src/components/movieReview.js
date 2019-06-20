@@ -20,12 +20,11 @@ class MovieReview extends React.Component {
     this.setState({ movieName: event.target.value});
     // If nothing in search box revert to previous
     if (event.target.value === '') {
-      const result = this.fetchMoviesData();
-      this.setState({ reviews: result.results, hasMore: result.has_more });
+      this.fetchMoviesData();
     }
   }
 
-  componentWillMount = () => {
+  componentDidMount = () => {
     this.fetchMoviesData();
   }
 
@@ -41,23 +40,25 @@ class MovieReview extends React.Component {
 
   loadMoreReviews = async () => {
     let apiUri = `https://api.nytimes.com/svc/movies/v2/reviews/picks.json?api-key=${process.env.REACT_APP_NYTAPIKey}&order=by-date`;
-    apiUri += `&offset=${parseInt(this.state.offset+20)}`;
-    this.setState({offset: parseInt(this.state.offset+20)});
-    
+    const nextOffset = parseInt(this.state.offset+20);
+    apiUri += `&offset=${nextOffset}`;
+
     const res = await fetch(apiUri);
     const data = await res.json();
-    
+
     const reviews = this.state.reviews.concat(data.results);
-    
+
     this.setState({
       reviews: reviews, 
-      hasMore: data.has_more 
+      hasMore: data.has_more,
+      offset: nextOffset
     });
 
     // TODO: Load more in contrast to filter queries
   }
 
   render() {
+    const { reviews } = this.state;
     return (
       <div>
         <div className="input-group mb-3">
@@ -81,8 +82,8 @@ class MovieReview extends React.Component {
       </div>
 
       <div className="row">
-        { this.state.reviews &&
-          this.state.reviews.map(review => (
+        { reviews &&
+          reviews.map(review => (
         <div className="col-lg-4 col-md-6 col-sm-12 float-left d-flex mb-3" key={review.display_title}>
           <div className="card">
             {(review.multimedia && review.multimedia.src) ?
