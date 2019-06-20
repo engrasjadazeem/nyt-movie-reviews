@@ -73,7 +73,7 @@ class MovieReview extends React.Component {
             aria-describedby="basic-addon2" />
           <div className="input-group-append">
             <button 
-              className="btn btn-secondary" 
+              className="btn btn-primary" 
               type="button"
               onClick={this.handleSearch}>
                 Search
@@ -103,6 +103,11 @@ class MovieReview extends React.Component {
         </div>
         ))}
       </div>
+      
+      {
+        reviews.length === 0 &&
+        <div className="text-center">Try searching another name, we have got plenty!</div>
+      }
 
       { this.state.hasMore &&
       <div className="row">
