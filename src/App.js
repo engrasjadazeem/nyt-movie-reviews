@@ -8,6 +8,8 @@ function App() {
     <div className="App container">
       <Header />
       <MovieReview/>
+
+      {/* TODO (optional): Check react-native-background-fetch package serves the purpose or not */}
     </div>
   );
 }
