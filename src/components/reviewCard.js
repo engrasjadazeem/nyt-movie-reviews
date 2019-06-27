@@ -4,6 +4,10 @@ class ReviewCard extends Component {
   state = {
     review: this.props.review
   };
+
+  componentDidMount = () => {
+    this.props.dosomething('AsjadAlladin');
+  }
   
   render() {
     const { review } = this.props;

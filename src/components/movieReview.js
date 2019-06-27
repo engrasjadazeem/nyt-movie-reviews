@@ -10,7 +10,12 @@ class MovieReview extends React.Component {
     reviews: [],
     hasMore: false,
     offset: 0,
+    text_asjad: '**'
     };
+
+  handledosomething = (receivedText) => {
+    this.setState({ text_asjad: receivedText });
+  }
 
   handleSearch = async () => {
     const res = await fetch(`https://api.nytimes.com/svc/movies/v2/reviews/search.json?query=${this.state.movieName}&api-key=${process.env.REACT_APP_NYTAPIKey}`);
@@ -113,11 +118,12 @@ class MovieReview extends React.Component {
       </div>
 
       <div className="row">
-        
+        {this.state.text_asjad}
         { reviews &&
           reviews.map(review => (
           <ReviewCard 
-            review={review} />
+            review={review}
+            dosomething={this.handledosomething} />
         ))}
       </div>
       
