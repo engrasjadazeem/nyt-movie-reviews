@@ -24,18 +24,47 @@ class MovieReview extends React.Component {
     }
   }
 
-  componentDidMount = () => {
-    this.fetchMoviesData();
+  compareArrays = (arr1, arr2) => {
+    const A = arr1.map(x => x.display_title);
+    const B = arr2.map(x => x.display_title);
+    return B.filter(function (a) {
+        return A.indexOf(a) === -1;
+    });
   }
 
-  fetchMoviesData = async () => {
+  componentDidMount = () => {
+    this.fetchMoviesData();
+
+    // Set interval of fetching for new content
+    window.setInterval(() => {
+      if (this.state.movieName === '') {
+        const stateReviews = this.state.reviews;
+        const newlyFetchedReviews = this.fetchMoviesData(true);
+        let unrenderedReviews = this.compareArrays(stateReviews, newlyFetchedReviews);
+        if (unrenderedReviews.length > 0) {
+          // Some new review came up
+          this.setState({
+            reviews: [...newlyFetchedReviews, ...stateReviews]
+          });
+        }
+      }
+    }, 15 * 60 * 60 * 1000); // Every 15 minutes
+  }
+
+  fetchMoviesData = async (keepState) => {
     let apiUri = `https://api.nytimes.com/svc/movies/v2/reviews/picks.json?api-key=${process.env.REACT_APP_NYTAPIKey}&order=by-date`;
     const res = await fetch(apiUri);
     const data = await res.json();
-    this.setState({
-      reviews: data.results, 
-      hasMore: data.has_more 
-    });
+    if (!keepState) {
+      this.setState({
+        reviews: data.results, 
+        hasMore: data.has_more 
+      });
+    } else {
+      return {
+        reviews: data.results
+      }
+    }
   }
 
   loadMoreReviews = async () => {
